@@ -30,7 +30,13 @@ def webhook():
     # 替换 content 字段中的占位符
     # 这里假设 TradingView 消息中有 `ticker` 字段
     ticker = data.get('ticker', '未知')  # 使用 TradingView 数据中的 ticker 字段
-    formatted_content = f"{ticker}交易消息：做空！"
+    type = data.get('type', '未知')
+    type = '做多' if type == 'Long' else '做空'
+    enterPrice = data.get('enterPrice', '未知')
+    tp = data.get('TP', '未知')
+    sl = data.get('SL', '未知')
+    rpt = data.get('rpt', '未知')
+    formatted_content = f"{ticker}交易消息: {type}\n入场价: {enterPrice}\n止盈价: {tp}\n止损价: {sl}\n每笔订单风险: {rpt}!"
     
     # 替换 JSON 模板中的 content
     json_template['text']['content'] = formatted_content
