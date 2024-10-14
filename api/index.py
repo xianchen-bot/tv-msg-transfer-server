@@ -29,7 +29,7 @@ def webhook():
 
     # 替换 content 字段中的占位符
     # 这里假设 TradingView 消息中有 `ticker` 字段
-    ticker = data.get('ticker', '未知')  # 使用 TradingView 数据中的 ticker 字段
+    ticker = data.get('ticker', '未知')  # 使用 TradingView 发来的数据
     type = data.get('type', '未知')
     type = '做多' if type == 'Long' else '做空'
     enterPrice = data.get('enterPrice', '未知')
