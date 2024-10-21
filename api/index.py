@@ -12,8 +12,8 @@ def home():
 @app.route('/dwx')
 def dwx():
     try:
-        # 发起GET请求到指定的地址
-        response = requests.get('http://118.25.137.220:5000/')
+        # 发起GET请求到指定的地址，并设置超时时间为2秒
+        response = requests.get('http://118.25.137.220:5000/', timeout=2)
         
         # 检查响应状态码，确保请求成功
         if response.status_code == 200:
@@ -24,8 +24,13 @@ def dwx():
             print(f"请求失败，状态码: {response.status_code}")
             return jsonify({'status': 'error', 'message': f'Failed with status code {response.status_code}'}), response.status_code
 
-    except Exception as e:
-        # 如果请求过程中出现错误，捕获并处理异常
+    except requests.exceptions.Timeout:
+        # 处理请求超时的情况
+        print("请求超时")
+        return jsonify({'status': 'error', 'message': 'Request timed out'}), 504
+
+    except requests.exceptions.RequestException as e:
+        # 处理其他请求错误
         print(f"请求出错: {e}")
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
