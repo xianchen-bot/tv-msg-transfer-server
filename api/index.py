@@ -72,6 +72,15 @@ def webhook():
     # 打印替换后的 JSON
     print(f"Formatted JSON: {json_template}")
 
+    # 向钉钉机器人 webhook 地址发送 POST 请求
+    dingding_url = "https://oapi.dingtalk.com/robot/send?access_token=5bc7e0577062bb4bacc9959f566d77341c78db1c03b66a1f3431d23f7c647bf4"
+    try:
+        response = requests.post(dingding_url, json=json_template)
+        response.raise_for_status()  # 检查请求是否成功
+        print(f"Success forwarding code: {response.status_code}")
+    except requests.RequestException as e:
+        print(f"Error forwarding data: {e}")
+
     # dwx_connect trade 地址发送 POST 请求
     dwx_connect_trade_url = "http://118.25.137.220:5000/open_order"
     try:
@@ -95,15 +104,6 @@ def webhook():
     except requests.exceptions.RequestException as e:
         # 处理其他请求错误
         print(f"请求出错: {e}")
-
-    # 向钉钉机器人 webhook 地址发送 POST 请求
-    dingding_url = "https://oapi.dingtalk.com/robot/send?access_token=5bc7e0577062bb4bacc9959f566d77341c78db1c03b66a1f3431d23f7c647bf4"
-    try:
-        response = requests.post(dingding_url, json=json_template)
-        response.raise_for_status()  # 检查请求是否成功
-        print(f"Success forwarding code: {response.status_code}")
-    except requests.RequestException as e:
-        print(f"Error forwarding data: {e}")
 
     return "process msg finished."
 
