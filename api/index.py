@@ -83,11 +83,18 @@ def webhook():
             "tp": tp,
             "rpt": rpt
         }
-        response = requests.post(dwx_connect_trade_url, json=trade_json)
-        response.raise_for_status()  # 检查请求是否成功
+        print(f"trade_json: {trade_json}")
+        response = requests.post(dwx_connect_trade_url, json=trade_json, timeout=2)
+        # response.raise_for_status()  # 检查请求是否成功
         print(f"Success forwarding code: {response.status_code}")
-    except requests.RequestException as e:
-        print(f"Error forwarding data: {e}")
+
+    except requests.exceptions.Timeout:
+        # 处理请求超时的情况
+        print("请求超时")
+
+    except requests.exceptions.RequestException as e:
+        # 处理其他请求错误
+        print(f"请求出错: {e}")
 
     # 向钉钉机器人 webhook 地址发送 POST 请求
     dingding_url = "https://oapi.dingtalk.com/robot/send?access_token=5bc7e0577062bb4bacc9959f566d77341c78db1c03b66a1f3431d23f7c647bf4"
