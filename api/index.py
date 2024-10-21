@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 import requests
+import threading
 
 app = Flask(__name__)
 
@@ -35,6 +36,28 @@ def dwx():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
+# 处理钉钉请求的函数
+def send_to_dingding(json_template):
+    dingding_url = "https://oapi.dingtalk.com/robot/send?access_token=5bc7e0577062bb4bacc9959f566d77341c78db1c03b66a1f3431d23f7c647bf4"
+    try:
+        response = requests.post(dingding_url, json=json_template)
+        response.raise_for_status()  # 检查请求是否成功
+        print(f"Success forwarding to DingDing. Status code: {response.status_code}")
+    except requests.RequestException as e:
+        print(f"Error forwarding data to DingDing: {e}")
+
+# 处理 dwx_connect_trade 请求的函数
+def send_to_dwx_connect_trade(trade_json):
+    dwx_connect_trade_url = "http://118.25.137.220:5000/open_order"
+    try:
+        response = requests.post(dwx_connect_trade_url, json=trade_json, timeout=2)
+        print(f"Success forwarding to DWX connect trade. Status code: {response.status_code}")
+    except requests.exceptions.Timeout:
+        print("请求超时")
+    except requests.exceptions.RequestException as e:
+        print(f"请求出错: {e}")
+
+
 # 接收 TradingView 的 Webhook 消息
 @app.route('/webhook', methods=['POST'])
 def webhook():
@@ -55,55 +78,44 @@ def webhook():
     }
 
     # 替换 content 字段中的占位符
-    # 这里假设 TradingView 消息中有 `ticker` 字段
     ticker = data.get('ticker', '未知')  # 使用 TradingView 发来的数据
     order_type_str = data.get('type', '未知')
     order_type = 'buy' if order_type_str == 'Long' else 'sell'
     type_desc = '做多' if order_type_str == 'Long' else '做空'
-    enterPrice = data.get('enterPrice', '未知')
+    enter_price = data.get('enterPrice', '未知')
     tp = data.get('TP', '未知')
     sl = data.get('SL', '未知')
     rpt = data.get('rpt', '未知')
-    formatted_content = f"{ticker}交易消息: {type_desc}\n入场价: {enterPrice}\n止盈价: {tp}\n止损价: {sl}\n每笔订单风险: {rpt}!"
-    
+    formatted_content = f"{ticker}交易消息: {type_desc}\n入场价: {enter_price}\n止盈价: {tp}\n止损价: {sl}\n每笔订单风险: {rpt}!"
+
     # 替换 JSON 模板中的 content
     json_template['text']['content'] = formatted_content
 
     # 打印替换后的 JSON
     print(f"Formatted JSON: {json_template}")
 
-    # 向钉钉机器人 webhook 地址发送 POST 请求
-    dingding_url = "https://oapi.dingtalk.com/robot/send?access_token=5bc7e0577062bb4bacc9959f566d77341c78db1c03b66a1f3431d23f7c647bf4"
-    try:
-        response = requests.post(dingding_url, json=json_template)
-        response.raise_for_status()  # 检查请求是否成功
-        print(f"Success forwarding code: {response.status_code}")
-    except requests.RequestException as e:
-        print(f"Error forwarding data: {e}")
+    # 准备 trade_json
+    trade_json = {
+        "symbol": ticker,
+        "enter_price": enter_price,
+        "order_type": order_type,
+        "sl": sl,
+        "tp": tp,
+        "rpt": rpt
+    }
+    print(f"trade_json: {trade_json}")
 
-    # dwx_connect trade 地址发送 POST 请求
-    dwx_connect_trade_url = "http://118.25.137.220:5000/open_order"
-    try:
-        trade_json = {
-            "symbol": ticker,
-            "enter_price": enterPrice,
-            "order_type": order_type,
-            "sl": sl,
-            "tp": tp,
-            "rpt": rpt
-        }
-        print(f"trade_json: {trade_json}")
-        response = requests.post(dwx_connect_trade_url, json=trade_json, timeout=2)
-        # response.raise_for_status()  # 检查请求是否成功
-        print(f"Success forwarding code: {response.status_code}")
+    # 使用线程分别处理两个 POST 请求
+    thread_dingding = threading.Thread(target=send_to_dingding, args=(json_template,))
+    thread_dwx_trade = threading.Thread(target=send_to_dwx_connect_trade, args=(trade_json,))
 
-    except requests.exceptions.Timeout:
-        # 处理请求超时的情况
-        print("请求超时")
+    # 启动线程
+    thread_dingding.start()
+    thread_dwx_trade.start()
 
-    except requests.exceptions.RequestException as e:
-        # 处理其他请求错误
-        print(f"请求出错: {e}")
+    # 等待两个线程执行完毕
+    thread_dingding.join()
+    thread_dwx_trade.join()
 
     return "process msg finished."
 
