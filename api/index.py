@@ -14,7 +14,7 @@ def home():
 def dwx():
     try:
         # 发起GET请求到指定的地址，并设置超时时间为2秒
-        response = requests.get('http://118.25.137.220:5000/', timeout=2)
+        response = requests.get('http://118.25.137.220:8080/hello', timeout=2)
         
         # 检查响应状态码，确保请求成功
         if response.status_code == 200:
