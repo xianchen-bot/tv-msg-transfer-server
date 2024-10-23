@@ -48,7 +48,7 @@ def send_to_dingding(json_template):
 
 # 处理 dwx_connect_trade 请求的函数
 def send_to_dwx_connect_trade(trade_json):
-    dwx_connect_trade_url = "http://118.25.137.220:5000/open_order"
+    dwx_connect_trade_url = "http://118.25.137.220:8080/open_order"
     try:
         response = requests.post(dwx_connect_trade_url, json=trade_json, timeout=2)
         print(f"Success forwarding to DWX connect trade. Status code: {response.status_code}")
