@@ -97,10 +97,10 @@ def webhook():
     # 准备 trade_json
     trade_json = {
         "symbol": ticker,
-        "enter_price": enter_price,
-        "order_type": order_type,
-        "sl": sl,
-        "tp": tp,
+        "price": enter_price,
+        "orderType": order_type,
+        "stopLoss": sl,
+        "takeProfit": tp,
         "rpt": rpt
     }
     print(f"trade_json: {trade_json}")
